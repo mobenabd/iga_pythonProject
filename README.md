@@ -20,12 +20,12 @@ This project is inspired by :
 ## Quick start
 Clone the repository and run the script
 ```[bash]
-git clone 
-cd iga_project
+git clone https://github.com/mobenabd/iga_pythonProject.git
+cd iga_pythonProject
 main2D.py
 ```
 
-To generate doxgen documentation, run :
+To generate Doxgen documentation, run :
 ```[bash]
 doxygen
 ```
