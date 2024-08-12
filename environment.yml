@@ -1,0 +1,7 @@
+name: iga_project
+channels:
+  - defaults
+dependencies:
+  - python
+  - matplotlib
+  - numpy
