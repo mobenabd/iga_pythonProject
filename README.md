@@ -1,7 +1,7 @@
 ## About
 Implementation of IsoGeometric Analysis (IGA) for elliptic scalar problems on arbitrary geometries in 1D and 2D.
 
-Refinement is restricted to h-refinement (node insertion).
+Refinement is restricted to h-refinement (knot insertion).
 
 Boundary conditions are restricted to homogeneous Dirichlet and applied by directly adapting the stiffness matrix and right-hand side vector.
 
