@@ -22,7 +22,7 @@ Clone the repository and run the script
 ```[bash]
 git clone https://github.com/mobenabd/iga_pythonProject.git
 cd iga_pythonProject
-main2D.py
+main2d.py
 ```
 
 To generate Doxgen documentation, run :
