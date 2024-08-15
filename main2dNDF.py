@@ -7,7 +7,7 @@ def main():
     """
     Solve the NDF equation -A:H(u) = f in Ω with homogeneous Dirichlet BCs using C1 IgA.
     A is SPD, the smallest eigenvalue must be greater than 1.
-    The weak formulation used is: -\int \gamma A:H(u) \Delta v  = \int \gamma f \Delta v.
+    The weak formulation used is: -\int \gamma A:H(u) \Delta v  = \int \gamma f \Delta v, with gamma = trace(A) / |A|^2_F
     """
 
     # Test 1
