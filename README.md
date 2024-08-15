@@ -1,5 +1,5 @@
 ## About
-Implementation of IsoGeometric Analysis (IGA) for elliptic scalar problems on arbitrary geometries in 1D and 2D.
+Implementation of IsoGeometric Analysis (IGA) for elliptic scalar problems on arbitrary single patch geometries in 1D and 2D.
 
 Refinement is restricted to h-refinement (knot insertion).
 
@@ -36,9 +36,10 @@ doxygen
 ```
 iga_project
 |   LICENSE
-│   README.md
-|   main1D.py                  (solve 1D problems)
-|   main2D.py                  (solve 2D problems)
+|   README.md
+|   main1d.py                  (solve 1D problems)
+|   main2d.py                  (solve 2D problems)
+|   main2dNDF.py               (solve 2D NDF problems)
 |
 └───core                        (IGA solver core scripts)
 |   |   ...

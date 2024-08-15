@@ -154,9 +154,9 @@ def plot_2Dmesh(ctrlPts, weights, u_knot, v_knot, p, q, plotMeshOnly=False):
             x_eta[i, ii] = X[0] / X[2]
             y_eta[i, ii] = X[1] / X[2]
 
-    plt.figure()
-    plt.axis('tight')
     if (plotMeshOnly):
+        plt.figure()
+        plt.axis('tight')
         plt.subplot(1, 2, 1)  # plot Knot mesh image
         plt.title('Physical knot mesh')
         plt.plot(x_xi, y_xi, 'k-', linewidth=0.8)
@@ -232,7 +232,7 @@ def buildElmtConnMatrix_2D(p, q, uKnotVec, vKnotVec):
     return KnotIntervals_u, KnotIntervals_v, elt_idx, ConnMatrix
 
 
-def plot_2Dsol(p, q, uKnotVec, vKnotVec, ctrlPts, weights, controlVbls, dataType):
+def plot_2Dsol(p, q, uKnotVec, vKnotVec, ctrlPts, weights, controlVbls, dataType, uexct=None):
     """
     Plot the solution using computed controle variables.
 
@@ -260,6 +260,7 @@ def plot_2Dsol(p, q, uKnotVec, vKnotVec, ctrlPts, weights, controlVbls, dataType
     x_sampling = np.zeros((noPts, noPts))
     y_sampling = np.zeros((noPts, noPts))
     u_values = np.zeros((noPts, noPts))
+    uexct_values = np.zeros((noPts, noPts))
 
     weightedPts = computeWeighted(ctrlPts, weights)
 
@@ -274,19 +275,37 @@ def plot_2Dsol(p, q, uKnotVec, vKnotVec, ctrlPts, weights, controlVbls, dataType
 
             u_values[i, j], _, _ = NURBS_2Deval(xi[i], eta[j], p, q,
                                                 uKnotVec, vKnotVec, controlVbls, weights)
+            if uexct != None:
+                uexct_values[i, j] = uexct(x_sampling[i, j], y_sampling[i, j])
 
-    # plt.figure()
-    plot_2Dmesh(ctrlPts, weights, uKnotVec, vKnotVec, p, q)
-    plt.contourf(x_sampling, y_sampling, u_values)
-    # ax = plt.axes(projection ='3d')
-    # Creating plot
-    # ax.plot_surface(x_sampling, y_sampling, u_values)
-    # plt.show()
-    # return
+    if uexct == None:
+        plt.figure()
+        plot_2Dmesh(ctrlPts, weights, uKnotVec, vKnotVec, p, q)
+        plt.contourf(x_sampling, y_sampling, u_values)
+        plt.title("IgA sol with " + dataType + " geometry")
+        plt.colorbar()
+        plt.xlabel('x')
+        plt.ylabel('y')
+        # ax = plt.axes(projection ='3d')
+        # Creating plot
+        # ax.plot_surface(x_sampling, y_sampling, u_values)
+        # plt.show()
+        # return
+    else:
+        plt.figure()
+        plt.subplot(1, 2, 1)
+        plot_2Dmesh(ctrlPts, weights, uKnotVec, vKnotVec, p, q)
+        plt.contourf(x_sampling, y_sampling, u_values)
+        plt.title("IgA sol with " + dataType + " geometry")
+        plt.colorbar()
+        plt.xlabel('x')
+        plt.ylabel('y')
 
-    plt.title("IgA sol with " + dataType + " geometry")
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.axis('equal')
-    plt.colorbar()
+        plt.subplot(1, 2, 2)
+        plt.contourf(x_sampling, y_sampling, uexct_values)
+        plt.title("Exact sol ")
+        plt.colorbar()
+        plt.xlabel('x')
+        plt.ylabel('y')
+
     plt.show()

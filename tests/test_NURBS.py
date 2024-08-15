@@ -81,3 +81,35 @@ if (refinement > 0):
     ctrlPts, weights, uKnotVec, vKnotVec = Refine2DMesh(
         p, q, ctrlPts, weights, uKnotVec, vKnotVec, refinement)
 plot_2Dmesh(ctrlPts, weights, uKnotVec, vKnotVec, p, q, plotMeshOnly=True)
+
+
+#Test NDF scheme when A is identity
+# Test 3 (Discontinuous matrix, Adapted from Blechschmidt 2020)
+def A_mat(x, y): return np.identity(2)
+
+# Exact solution
+def uexct(x, y): return np.sin(np.pi*x) * np.sin(np.pi*y)
+
+# Source term function
+def sourceFunc(x, y):
+    A = A_mat(x, y)
+    return - np.pi**2 * (- A[0, 0] * np.sin(np.pi*x) * np.sin(np.pi*y)
+                         + 2 * A[0, 1] * np.cos(np.pi*x) * np.cos(np.pi*y)
+                         - A[1, 1] * np.sin(np.pi*x) * np.sin(np.pi*y))
+
+# Define the dmain shape 'unit square', 'L-shape', 'circle' etc..
+shape = 'unit square'
+# The required regularity of parameterization is at least 'C1' !!
+dataType = 'C1'
+# Refinement level
+refinement = 3
+
+from core.geo import GEO
+from core.solver import IGA2D_NDF
+
+geo = GEO(dataType, shape, refinement, dim=2)
+iga2dNDF = IGA2D_NDF(geo, sourceFunc, A_mat)
+iga2dNDF.assemble
+iga2dNDF.apply_boundary_conditions()
+iga2dNDF.solve
+iga2dNDF.plot_solution(uexct)

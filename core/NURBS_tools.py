@@ -213,7 +213,7 @@ def NURBSDersBasis_2D(xi, eta, p, q, U, V, weights, spanU=None, spanV=None):
     p (int)         : Degree of the basis functions in xi axis
     q (int)         : Degree of the basis functions in eta axis
     U (array)       : knot vector along the xi direction.
-    v (array)       : knot vector along the eta direction.
+    V (array)       : knot vector along the eta direction.
     weights (array) : Vector of weights
 
     Returns:
@@ -234,10 +234,6 @@ def NURBSDersBasis_2D(xi, eta, p, q, U, V, weights, spanU=None, spanV=None):
     if spanV == None:
         spanV = FindSpan(m - 1, q, eta, V)
 
-    Nu = np.zeros(p + 1)
-    Nv = np.zeros(q + 1)
-    dersNu = np.zeros((n, p + 1))
-    dersNv = np.zeros((m, q + 1))
     dersNu = DersBasisFuns(spanU, xi, p, 1, U)
     dersNv = DersBasisFuns(spanV, eta, q, 1, V)
 
@@ -255,9 +251,10 @@ def NURBSDersBasis_2D(xi, eta, p, q, U, V, weights, spanU=None, spanV=None):
             dWdxi += dersNu[1, i] * Nv[l] * wil
             dWdeta += dersNv[1, l] * Nu[i] * wil
 
-    R = np.zeros((p + 1) * (q + 1))
-    dRdxi = np.zeros((p + 1) * (q + 1))
-    dRdeta = np.zeros((p + 1) * (q + 1))
+    N_loc = (p + 1) * (q + 1)
+    R = np.zeros(N_loc)
+    dRdxi = np.zeros(N_loc)
+    dRdeta = np.zeros(N_loc)
 
     k = 0
     for l in range(q + 1):
@@ -271,6 +268,90 @@ def NURBSDersBasis_2D(xi, eta, p, q, U, V, weights, spanU=None, spanV=None):
             k += 1
 
     return R, dRdxi, dRdeta
+
+
+def NURBS2DersBasis_2D(xi, eta, p, q, U, V, weights):
+    """
+    Return the 2D NURBS basis functions, first and second derivatives.
+
+    Input:
+    xi (float)      : 1st Parametric coordinate where we want to evaluate NURBS functions 
+    eta (float)     : 2nd Parametric coordinate where we want to evaluate NURBS functions 
+    p (int)         : Degree of the basis functions in xi axis
+    q (int)         : Degree of the basis functions in eta axis
+    U (array)       : knot vector along the xi direction.
+    V (array)       : knot vector along the eta direction.
+    weights (array) : Vector of weights
+
+    Returns:
+    R (array)           : NURBS Basis functions
+    dRdxi (array)       : First derivatives of NURBS basis functions (w.r.t xi variable)
+    dRdeta (array)      : First derivatives of NURBS basis functions (w.r.t eta variable)
+    d2Rdxi (array)      : Second derivatives of NURBS basis functions (w.r.t xi variable)
+    d2Rdeta (array)     : Second derivatives of NURBS basis functions (w.r.t eta variable)
+    d2Rdxideta (array)  : Second derivatives of NURBS basis functions (w.r.t xi and eta variable)
+    """
+
+    tol = np.finfo(float).eps
+    xi = xi if abs(xi - U[-1]) >= tol else U[-1] - tol
+    eta = eta if abs(eta - V[-1]) >= tol else V[-1] - tol
+
+    n = len(U) - p - 1
+    m = len(V) - q - 1
+
+    spanU = FindSpan(n - 1, p, xi, U)
+    spanV = FindSpan(m - 1, q, eta, V)
+
+    dersNu = DersBasisFuns(spanU, xi, p, 2, U)
+    dersNv = DersBasisFuns(spanV, eta, q, 2, V)
+    Nu = dersNu[0, :]
+    Nv = dersNv[0, :]
+
+    uind = spanU - p
+    W = dWdxi = dWdeta = d2Wdxi = d2Wdeta = d2Wdxideta = 0.0
+
+    for l in range(q + 1):
+        vind = spanV - q + l
+        for i in range(p + 1):
+            wil = weights[uind + i + vind * n]
+            W += Nu[i] * Nv[l] * wil
+            dWdxi += dersNu[1, i] * Nv[l] * wil
+            d2Wdxi += dersNu[2, i] * Nv[l] * wil
+            dWdeta += dersNv[1, l] * Nu[i] * wil
+            d2Wdeta += dersNv[2, l] * Nu[i] * wil
+            d2Wdxideta += dersNu[1, i] * dersNv[1, l] * wil
+
+    N_loc = (p + 1) * (q + 1)
+    R = np.zeros(N_loc)
+    dRdxi = np.zeros(N_loc)
+    dRdeta = np.zeros(N_loc)
+    d2Rdxi = np.zeros(N_loc)
+    d2Rdeta = np.zeros(N_loc)
+    d2Rdxideta = np.zeros(N_loc)
+
+    k = 0
+    for l in range(q + 1):
+        vind = spanV - q + l
+        for i in range(p + 1):
+            cst = weights[uind + i + vind * n] / (W * W)
+            wil = weights[uind + i + vind * n]
+
+            R[k] = Nu[i] * Nv[l] * cst * W
+            dRdxi[k] = (dersNu[1, i] * Nv[l] * W - Nu[i] * Nv[l] * dWdxi) * cst
+            dRdeta[k] = (dersNv[1, l] * Nu[i] * W -
+                         Nu[i] * Nv[l] * dWdeta) * cst
+
+            d2Rdxi[k] = wil*(dersNu[2, i] * Nv[l] / W - 2 * dersNu[1, i] * Nv[l] * dWdxi / (W ** 2) -
+                             Nu[i] * Nv[l] * d2Wdxi / (W**2) + 2 * Nu[i] * Nv[l] * dWdxi * dWdxi / (W**3))
+            d2Rdeta[k] = wil*(dersNv[2, l] * Nu[i] / W - 2 * dersNv[1, l] * Nu[i] * dWdeta / (W**2) -
+                              Nu[i] * Nv[l] * d2Wdeta / (W**2) + 2 * Nu[i] * Nv[l] * dWdeta * dWdeta / (W**3))
+            d2Rdxideta[k] = wil*(dersNu[1, i] * dersNv[1, l] / W - dersNu[1, i] * Nv[l] * dWdeta / (W**2) -
+                                 Nu[i] * dersNv[1, l] * dWdxi / (W**2) - Nu[i] * Nv[l] * d2Wdxideta / (W**2) +
+                                 2 * Nu[i] * Nv[l] * dWdxi * dWdeta / (W**3))
+
+            k += 1
+
+    return R, dRdxi, dRdeta, d2Rdxi, d2Rdeta, d2Rdxideta
 
 
 def NURBS_1Deval(xi, p, U, ctrlPts, weights):
@@ -287,7 +368,7 @@ def NURBS_1Deval(xi, p, U, ctrlPts, weights):
 
     Returns:
     u (array)       : value of the interpolated function at xi
-    du (array)      : value of the 1st deriviative of the interpolated function (w.r.t parametric coordinates)
+    du (array)      : value of the 1st derivative of the interpolated function (w.r.t parametric coordinates)
     """
 
     # Get the number of knots and basis functions
@@ -367,8 +448,8 @@ def NURBS_2Deval(xi, eta, p, q, uKnotVec, vKnotVec, controlVbls, weights):
 
     Returns:
     val (float)    : value of the interpolated function at (xi, eta)
-    val_xi (float) : value of the 1st deriviative of the interpolated function (w.r.t parametric coordinates xi)
-    val_eta (float): value of the 1st deriviative of the interpolated function (w.r.t parametric coordinates eta)
+    val_xi (float) : value of the 1st derivative of the interpolated function (w.r.t parametric coordinates xi)
+    val_eta (float): value of the 1st derivative of the interpolated function (w.r.t parametric coordinates eta)
     """
 
     tol = np.finfo(float).eps
